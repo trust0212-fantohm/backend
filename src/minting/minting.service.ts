@@ -346,7 +346,7 @@ const nftMintABI = [
 @Injectable()
 export class MintingService {
   private readonly logger = new Logger(MintingService.name);
-  
+
   private provider: Provider;
   private wallet: Wallet;
   private contract: Contract;
@@ -364,17 +364,20 @@ export class MintingService {
     );
   }
 
-  async mintNFT(address: string): Promise<{ txHash: string }> {
+  async mintNFT(address: string) {
+    if (!ethers.isAddress(address)) {
+      this.logger.error(`Invalid address provided: ${address}`);
+      return { success: false, reason: 'Invalid address' };
+    }
+
     try {
       const tx = await this.contract.mintNFT(address);
       await tx.wait();
       this.logger.log(`Minted NFT for address ${address}, TX: ${tx.hash}`);
-      return { txHash: tx.hash };
+      return { success: true };
     } catch (error) {
-      this.logger.error(
-        `Minting failed for address ${address}: ${error.message}`,
-      );
-      throw error;
+      this.logger.error( error.reason);
+      return { success: false, reason: error.reason as string };
     }
   }
 }
